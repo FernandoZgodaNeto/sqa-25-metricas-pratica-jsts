@@ -1,6 +1,8 @@
 import { CNPJUtils } from "../CNPJUtils";
+const CNPJ_LENGTH_14 = 14;
+const CNPJ_LENGTH_100 = 100;
 
-describe("CNPJUtils", () => {
+function testValidateCNPJ(): void {
   describe("validateCNPJ", () => {
     it("should validate a valid CNPJ", () => {
       const validCNPJ = "11.222.333/0001-81";
@@ -38,14 +40,15 @@ describe("CNPJUtils", () => {
     });
 
     it("should handle null input", () => {
-      expect(() => CNPJUtils.validateCNPJ(null as any)).toThrow();
+      expect(() => CNPJUtils.validateCNPJ(null as unknown as string)).toThrow();
     });
 
     it("should handle undefined input", () => {
-      expect(() => CNPJUtils.validateCNPJ(undefined as any)).toThrow();
+      expect(() => CNPJUtils.validateCNPJ(undefined as unknown as string)).toThrow();
     });
   });
-
+}
+function testMaskCNPJ(): void {
   describe("maskCNPJ", () => {
     it("should mask a valid CNPJ", () => {
       const unmaskedCNPJ = "11222333000181";
@@ -75,14 +78,15 @@ describe("CNPJUtils", () => {
     });
 
     it("should handle null input", () => {
-      expect(() => CNPJUtils.maskCNPJ(null as any)).toThrow();
+      expect(() => CNPJUtils.maskCNPJ(null as unknown as string)).toThrow();
     });
 
     it("should handle undefined input", () => {
-      expect(() => CNPJUtils.maskCNPJ(undefined as any)).toThrow();
+      expect(() => CNPJUtils.maskCNPJ(undefined as unknown as string)).toThrow();
     });
   });
-
+}
+function testUnmaskCNPJ(): void {
   describe("unmaskCNPJ", () => {
     it("should remove mask from CNPJ", () => {
       const maskedCNPJ = "11.222.333/0001-81";
@@ -105,18 +109,20 @@ describe("CNPJUtils", () => {
     });
 
     it("should handle null input", () => {
-      expect(() => CNPJUtils.unmaskCNPJ(null as any)).toThrow();
+      expect(() => CNPJUtils.unmaskCNPJ(null as unknown as string)).toThrow();
     });
 
     it("should handle undefined input", () => {
-      expect(() => CNPJUtils.unmaskCNPJ(undefined as any)).toThrow();
+      expect(() => CNPJUtils.unmaskCNPJ(undefined as unknown as string)).toThrow();
     });
   });
+}
 
+function testGenerateValidCNPJ(): void {
   describe("generateValidCNPJ", () => {
     it("should generate a valid CNPJ", () => {
       const result = CNPJUtils.generateValidCNPJ();
-      expect(result).toHaveLength(14);
+      expect(result).toHaveLength(CNPJ_LENGTH_14);
       expect(CNPJUtils.validateCNPJ(result)).toBe(true);
     });
 
@@ -131,20 +137,19 @@ describe("CNPJUtils", () => {
       expect(result).toMatch(/^\d+$/);
     });
   });
-
+}
+function testIsValidFormat(): void {
   describe("isValidFormat", () => {
     it("should validate masked format", () => {
       const maskedCNPJ = "11.222.333/0001-81";
       const result = CNPJUtils.isValidFormat(maskedCNPJ);
       expect(result).toBe(true);
     });
-
     it("should validate unmasked format", () => {
       const unmaskedCNPJ = "11222333000181";
       const result = CNPJUtils.isValidFormat(unmaskedCNPJ);
       expect(result).toBe(true);
     });
-
     it("should validate partial format", () => {
       const partialCNPJ = "11.222";
       const result = CNPJUtils.isValidFormat(partialCNPJ);
@@ -156,26 +161,24 @@ describe("CNPJUtils", () => {
       const result = CNPJUtils.isValidFormat(invalidCNPJ);
       expect(result).toBe(false);
     });
-
     it("should handle empty string", () => {
       const result = CNPJUtils.isValidFormat("");
       expect(result).toBe(true);
     });
-
     it("should handle null input", () => {
-      const result = CNPJUtils.isValidFormat(null as any);
+      const result = CNPJUtils.isValidFormat(null as unknown as string);
       expect(result).toBe(false);
     });
-
     it("should handle undefined input", () => {
-      const result = CNPJUtils.isValidFormat(undefined as any);
+      const result = CNPJUtils.isValidFormat(undefined as unknown as string);
       expect(result).toBe(false);
     });
   });
-
+}
+function testEdgeCases(): void {
   describe("edge cases", () => {
     it("should handle very long strings", () => {
-      const longString = "1".repeat(100);
+      const longString = "1".repeat(CNPJ_LENGTH_100);
       expect(CNPJUtils.validateCNPJ(longString)).toBe(false);
       expect(() => CNPJUtils.maskCNPJ(longString)).toThrow();
     });
@@ -186,4 +189,12 @@ describe("CNPJUtils", () => {
       expect(() => CNPJUtils.maskCNPJ(specialChars)).toThrow();
     });
   });
+}
+describe("CNPJUtils", () => {
+  testValidateCNPJ();
+  testMaskCNPJ();
+  testUnmaskCNPJ();
+  testGenerateValidCNPJ();
+  testIsValidFormat();
+  testEdgeCases();
 });

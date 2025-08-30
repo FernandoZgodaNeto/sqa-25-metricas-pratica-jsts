@@ -1,102 +1,87 @@
+const LOCAL_PART_MAX_LENGTH = 64;
+const DOMAIN_MAX_LENGTH = 253;
+const DOT = '.';
+
 export class EmailUtils {
-  public static validateEmail(email: any): boolean {
-    // TODO: remover console.log depois
-    console.log("Validando email:", email);
+  private static validateEmailFormat(email: string): boolean {
+    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return regex.test(email);
+  }
 
-    const x = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
-    if (!x.test(email)) {
-      console.log("Regex falhou");
-      return false;
-    }
-
-    const parts = email.split("@");
-    const x1 = parts[0];
-    const x2 = parts[1];
-    console.log("Parte local:", x1, "Domínio:", x2);
-
-    if (x1.length > 64) {
-      return false;
-    }
-
-    if (x2.length > 253) {
-      return false;
-    }
-
-    if (x1.startsWith(".") || x1.endsWith(".")) {
-      return false;
-    }
-
-    if (x1.includes("..")) {
-      return false;
-    }
-
-    if (!x2.includes(".")) {
-      return false;
-    }
-
-    if (x2.startsWith(".") || x2.endsWith(".")) {
-      return false;
-    }
-
-    if (x2.includes("..")) {
-      return false;
-    }
-
-    console.log("Email válido");
+  private static validateLocalPart(local: string): boolean {
+    if (local.length > LOCAL_PART_MAX_LENGTH) { return false; }
+    if (local.startsWith(DOT) || local.endsWith(DOT)) { return false; }
+    if (local.includes(DOT + DOT)) { return false; }
     return true;
   }
 
-  public static extractDomain(email: any): string | null {
-    if (!this.validateEmail(email)) {
-      return null;
-    }
-
-    const x = email.split("@");
-    return x[1] || null;
+  private static validateDomainPart(domain: string): boolean {
+    if (domain.length > DOMAIN_MAX_LENGTH) { return false; }
+    if (!domain.includes(DOT)) { return false; }
+    if (domain.startsWith(DOT) || domain.endsWith(DOT)) { return false; }
+    if (domain.includes(DOT + DOT)) { return false; }
+    return true;
   }
 
-  public static extractLocalPart(email: any): string | null {
-    if (!this.validateEmail(email)) {
-      return null;
-    }
-
-    const x = email.split("@");
-    return x[0] || null;
+  private static validateEmailParts(email: string): { local: string; domain: string } | null {
+    const [local, domain] = email.split('@');
+    if (!local || !domain) { return null; }
+    return { local, domain };
   }
 
-  public static isFromDomain(email: any, domain: any): boolean {
-    if (!this.validateEmail(email) || !domain) {
-      return false;
-    }
+  public static validateEmail(email: string): boolean {
+    if (typeof email !== 'string') { return false; }
+    if (!this.validateEmailFormat(email)) { return false; }
+    const parts = this.validateEmailParts(email);
+    if (!parts) { return false; }
+    if (!this.validateLocalPart(parts.local)) { return false; }
+    if (!this.validateDomainPart(parts.domain)) { return false; }
+    return true;
+  }
 
-    const x = this.extractDomain(email);
-    if (!x) {
-      return false;
-    }
+  public static extractDomain(email: string): string | null {
+    if (!this.validateEmail(email)) { return null; }
+    const parts = email.split('@');
+    return parts[1] || null;
+  }
 
-    if (x.toLowerCase() === domain.toLowerCase()) {
-      return true;
-    }
+  public static extractLocalPart(email: string): string | null {
+    if (!this.validateEmail(email)) { return null; }
+    const parts = email.split('@');
+    return parts[0] || null;
+  }
 
-    if (x.toLowerCase().endsWith("." + domain.toLowerCase())) {
-      return true;
-    }
-
-    const x1 = x.toLowerCase().split(".");
-    const x2 = domain.toLowerCase().split(".");
-
-    if (x1.length >= x2.length) {
-      const temp = x1.slice(-x2.length);
-      if (temp.join(".") === x2.join(".")) {
-        return true;
-      }
-    }
-
+  private static checkDomainMatch(emailDomain: string, targetDomain: string): boolean {
+    if (emailDomain === targetDomain) { return true; }
+    if (emailDomain.endsWith(DOT + targetDomain)) { return true; }
     return false;
   }
 
-  public static normalizeEmail(email: any): string {
+  private static checkSubdomainMatch(emailDomain: string, targetDomain: string): boolean {
+    const emailParts = emailDomain.split(DOT);
+    const domainParts = targetDomain.split(DOT);
+    if (emailParts.length >= domainParts.length) {
+      const temp = emailParts.slice(-domainParts.length);
+      if (temp.join(DOT) === domainParts.join(DOT)) { return true; }
+    }
+    return false;
+  }
+
+  public static isFromDomain(email: string, domain: string): boolean {
+    if (!this.validateEmail(email) || !domain) { return false; }
+    const extractedDomain = this.extractDomain(email);
+    if (!extractedDomain) { return false; }
+    const emailDomain = extractedDomain.toLowerCase();
+    const targetDomain = domain.toLowerCase();
+    if (this.checkDomainMatch(emailDomain, targetDomain)) { return true; }
+    if (this.checkSubdomainMatch(emailDomain, targetDomain)) { return true; }
+    return false;
+  }
+
+  public static normalizeEmail(email: string): string {
+    if (email === null || email === undefined) {
+      throw new TypeError('Email cannot be null or undefined');
+    }
     return email.trim().toLowerCase();
   }
 }
